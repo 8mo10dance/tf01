@@ -29,5 +29,5 @@ module "site" {
 }
 
 output "local_site_url" {
-  value = "http://localhost:4566/${module.site.bucket_id}/index.html"
+  value = "http://localhost:4566/${module.site.bucket_id}"
 }
