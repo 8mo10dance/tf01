@@ -22,9 +22,10 @@ provider "aws" {
 }
 
 module "site" {
-  source = "../modules/static-site"
+  source = "../modules/s3-static-site"
 
   # The ready hook uploads index.html outside Terraform, so allow the disposable local bucket to be destroyed while nonempty.
+  bucket_name   = "my-bucket-949926374137-ap-northeast-1-an"
   force_destroy = true
 }
 

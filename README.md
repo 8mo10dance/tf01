@@ -33,9 +33,11 @@ Stop the emulator without deleting its persisted data:
 docker compose down
 ```
 
-The S3 website resources are defined once in `modules/static-site`. Production
-and local environments both call that module, so infrastructure changes can be
-tested against Floci before they are planned against AWS:
+The S3 website resources are defined in `modules/s3-static-site`. Production
+and local environments both call that module, so S3 infrastructure changes can
+be tested against Floci before they are planned against AWS. CloudFront
+resources are defined separately in `modules/cloudfront` and are used only by
+production; local plans do not validate CloudFront changes:
 
 ```sh
 terraform -chdir=local plan
@@ -46,4 +48,4 @@ terraform -chdir=production plan
 The production Terraform configuration and state live under `production/`;
 the local environment has an independent state under `local/`. Provider
 settings are environment-specific; the S3 resource configuration, including
-the bucket name, lives in the shared module.
+the bucket name, lives in the shared S3 module.
