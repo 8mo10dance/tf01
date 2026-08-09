@@ -1,7 +1,7 @@
 resource "aws_s3_bucket" "site" {
   bucket           = "my-bucket-949926374137-ap-northeast-1-an"
   bucket_namespace = "account-regional"
-  force_destroy    = false
+  force_destroy    = var.force_destroy
 }
 
 resource "aws_s3_bucket_website_configuration" "site" {
