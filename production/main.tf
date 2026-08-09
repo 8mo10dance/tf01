@@ -33,3 +33,17 @@ import {
   to = module.site.aws_s3_bucket_policy.site
   id = "my-bucket-949926374137-ap-northeast-1-an"
 }
+
+import {
+  to = module.site.aws_cloudfront_origin_access_control.site
+  id = "E1067EAO0E6YUA"
+}
+
+import {
+  to = module.site.aws_cloudfront_distribution.site
+  id = "E27L9ZCVF9GWVN"
+}
+
+output "cloudfront_domain_name" {
+  value = module.site.cloudfront_domain_name
+}
