@@ -1,0 +1,18 @@
+services:
+  floci:
+    image: floci/floci:latest-compat
+    ports:
+      - "4566:4566"
+    environment:
+      FLOCI_DEFAULT_REGION: ap-northeast-1
+      FLOCI_STORAGE_MODE: hybrid
+      FLOCI_STORAGE_PERSISTENT_PATH: /app/data
+      FLOCI_SERVICES_S3_ENFORCE_AUTH: "true"
+      FLOCI_INIT_HOOKS_TIMEOUT_SECONDS: "300"
+    volumes:
+      - floci-data:/app/data
+      - ./floci/init/ready.d:/etc/floci/init/ready.d:ro
+      - ./site:/seed:ro
+
+volumes:
+  floci-data:
