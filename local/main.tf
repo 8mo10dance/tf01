@@ -30,5 +30,5 @@ module "site" {
 }
 
 output "local_site_url" {
-  value = "http://localhost:4566/${module.site.bucket_id}"
+  value = "http://localhost:8080"
 }
