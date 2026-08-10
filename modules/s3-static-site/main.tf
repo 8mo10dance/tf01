@@ -51,6 +51,13 @@ resource "aws_s3_bucket_policy" "site" {
   })
 
   depends_on = [aws_s3_bucket_public_access_block.site]
+
+  lifecycle {
+    precondition {
+      condition     = var.enable_public_read || var.cloudfront_distribution_arn != null
+      error_message = "At least one S3 object reader must be configured by enabling public read or providing a CloudFront distribution ARN."
+    }
+  }
 }
 
 output "bucket_id" {
