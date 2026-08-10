@@ -10,6 +10,12 @@ variable "cloudfront_distribution_arn" {
   nullable    = true
 }
 
+variable "enable_public_read" {
+  description = "Whether to allow anonymous reads of objects in the bucket"
+  type        = bool
+  default     = false
+}
+
 variable "force_destroy" {
   description = "Whether to delete all objects when destroying the S3 bucket"
   type        = bool

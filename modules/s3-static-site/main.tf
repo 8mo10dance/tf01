@@ -15,23 +15,23 @@ resource "aws_s3_bucket_website_configuration" "site" {
 resource "aws_s3_bucket_public_access_block" "site" {
   bucket = aws_s3_bucket.site.id
 
-  block_public_acls       = false
-  block_public_policy     = false
-  ignore_public_acls      = false
-  restrict_public_buckets = false
+  block_public_acls       = !var.enable_public_read
+  block_public_policy     = !var.enable_public_read
+  ignore_public_acls      = !var.enable_public_read
+  restrict_public_buckets = !var.enable_public_read
 }
 
 resource "aws_s3_bucket_policy" "site" {
   bucket = aws_s3_bucket.site.id
   policy = jsonencode({
     Statement = concat(
-      [{
+      var.enable_public_read ? [{
         Action    = "s3:GetObject"
         Effect    = "Allow"
         Principal = "*"
         Resource  = "${aws_s3_bucket.site.arn}/*"
         Sid       = "PublicReadGetObject"
-      }],
+      }] : [],
       var.cloudfront_distribution_arn == null ? [] : [{
         Action = "s3:GetObject"
         Condition = {
@@ -51,6 +51,13 @@ resource "aws_s3_bucket_policy" "site" {
   })
 
   depends_on = [aws_s3_bucket_public_access_block.site]
+
+  lifecycle {
+    precondition {
+      condition     = var.enable_public_read || var.cloudfront_distribution_arn != null
+      error_message = "At least one S3 object reader must be configured by enabling public read or providing a CloudFront distribution ARN."
+    }
+  }
 }
 
 output "bucket_id" {
