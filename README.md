@@ -12,7 +12,7 @@ Compose:
 
 ```sh
 docker compose run --rm client npm ci
-docker compose run --rm client npm run build
+docker compose run --rm client npm run build:local
 ```
 
 The generated files are written to the ignored `client/public` directory. Start
@@ -25,9 +25,9 @@ terraform -chdir=local apply
 ```
 
 Open the `local_site_url` shown by Terraform (`http://localhost:8080`). The `/`,
-`/users`, and `/users/new` routes are handled by the React application. nginx
-loads missing local routes from the bucket's `index.html`, matching the SPA
-fallback configured on the production CloudFront distribution.
+`/users`, and `/users/new` routes are handled by the React application during
+client-side navigation. Direct requests to routes without matching S3 objects
+return an S3 error until an SPA fallback strategy is configured.
 
 The Floci ready hook waits for Terraform to create the bucket and then syncs all
 files from `client/public`. If the hook times out, or after rebuilding the
@@ -51,6 +51,37 @@ Stop the emulator without deleting its persisted data:
 
 ```sh
 docker compose down
+```
+
+## Production deployment
+
+Build the client, preview the S3 changes, and then synchronize the generated
+assets to the production site bucket:
+
+```sh
+docker compose run --rm client npm ci
+docker compose run --rm client npm run build:production
+aws s3 sync client/public \
+  s3://my-bucket-949926374137-ap-northeast-1-an \
+  --delete --dryrun
+aws s3 sync client/public \
+  s3://my-bucket-949926374137-ap-northeast-1-an \
+  --delete
+```
+
+The bucket is dedicated to generated site assets. The `--delete` option removes
+objects that are no longer present in the current build. After the upload,
+invalidate the CloudFront cache and wait for it to complete:
+
+```sh
+invalidation_id="$(aws cloudfront create-invalidation \
+  --distribution-id E27L9ZCVF9GWVN \
+  --paths '/*' \
+  --query 'Invalidation.Id' \
+  --output text)"
+aws cloudfront wait invalidation-completed \
+  --distribution-id E27L9ZCVF9GWVN \
+  --id "$invalidation_id"
 ```
 
 ## Terraform

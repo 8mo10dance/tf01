@@ -2,7 +2,8 @@
   "name": "client",
   "private": true,
   "scripts": {
-    "build": "webpack --mode=production",
+    "build:local": "webpack --mode=development",
+    "build:production": "webpack --mode=production",
     "watch": "webpack -w --mode=development"
   },
   "devDependencies": {
