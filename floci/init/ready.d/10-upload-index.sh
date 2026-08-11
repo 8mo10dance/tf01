@@ -7,5 +7,8 @@ until aws s3api head-bucket --bucket "$bucket_name" >/dev/null 2>&1; do
   sleep 1
 done
 
-aws s3 cp /seed/index.html "s3://$bucket_name/index.html" \
-  --content-type "text/html; charset=utf-8"
+until [ -f /seed/index.html ]; do
+  sleep 1
+done
+
+aws s3 sync /seed "s3://$bucket_name" --delete
