@@ -1,4 +1,11 @@
 services:
+  client:
+    image: node:20.8.0
+    working_dir: /client
+    volumes:
+      - ./client:/client
+      - client-node-modules:/client/node_modules
+
   floci:
     image: floci/floci:latest-compat
     ports:
@@ -12,7 +19,7 @@ services:
     volumes:
       - floci-data:/app/data
       - ./floci/init/ready.d:/etc/floci/init/ready.d:ro
-      - ./site:/seed:ro
+      - ./client/public:/seed:ro
 
   nginx:
     image: nginx:1.31.3-alpine
@@ -24,4 +31,5 @@ services:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
 
 volumes:
+  client-node-modules:
   floci-data:
