@@ -73,6 +73,11 @@ import {
   id = "sg-09eabd6cce4fa75f2"
 }
 
+import {
+  to = module.ec2.aws_instance.front
+  id = "i-0a2b09a199de5febc"
+}
+
 output "cloudfront_domain_name" {
   value = module.cloudfront.domain_name
 }
