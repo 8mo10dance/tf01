@@ -10,6 +10,12 @@ variable "cloudfront_distribution_arn" {
   nullable    = true
 }
 
+variable "reader_principal_arns" {
+  description = "IAM principal ARNs allowed to read the private bucket"
+  type        = list(string)
+  default     = []
+}
+
 variable "enable_public_read" {
   description = "Whether to allow anonymous reads of objects in the bucket"
   type        = bool
