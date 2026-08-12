@@ -45,6 +45,23 @@ resource "aws_s3_bucket_policy" "site" {
         }
         Resource = "${aws_s3_bucket.site.arn}/*"
         Sid      = "AllowCloudFrontServicePrincipal"
+      }],
+      length(var.reader_principal_arns) == 0 ? [] : [{
+        Action = "s3:ListBucket"
+        Effect = "Allow"
+        Principal = {
+          AWS = var.reader_principal_arns
+        }
+        Resource = aws_s3_bucket.site.arn
+        Sid      = "AllowPrivateReadersToList"
+        }, {
+        Action = "s3:GetObject"
+        Effect = "Allow"
+        Principal = {
+          AWS = var.reader_principal_arns
+        }
+        Resource = "${aws_s3_bucket.site.arn}/*"
+        Sid      = "AllowPrivateReadersToGetObjects"
       }]
     )
     Version = "2012-10-17"
@@ -54,8 +71,8 @@ resource "aws_s3_bucket_policy" "site" {
 
   lifecycle {
     precondition {
-      condition     = var.enable_public_read || var.cloudfront_distribution_arn != null
-      error_message = "At least one S3 object reader must be configured by enabling public read or providing a CloudFront distribution ARN."
+      condition     = var.enable_public_read || var.cloudfront_distribution_arn != null || length(var.reader_principal_arns) > 0
+      error_message = "At least one S3 object reader must be configured."
     }
   }
 }
