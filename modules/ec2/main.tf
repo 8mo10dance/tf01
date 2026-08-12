@@ -24,6 +24,16 @@ resource "aws_security_group" "ec2" {
     self             = false
     to_port          = 22
     }, {
+    cidr_blocks      = ["0.0.0.0/0"]
+    description      = "Allow HTTP"
+    from_port        = 80
+    ipv6_cidr_blocks = []
+    prefix_list_ids  = []
+    protocol         = "tcp"
+    security_groups  = []
+    self             = false
+    to_port          = 80
+    }, {
     cidr_blocks      = []
     description      = ""
     from_port        = 0
@@ -58,6 +68,12 @@ resource "aws_instance" "front" {
   private_ip                  = "172.31.25.63"
   source_dest_check           = true
   subnet_id                   = aws_default_subnet.ec2.id
+  user_data                   = <<-EOF
+    #!/bin/bash
+    dnf install -y nginx
+    systemctl enable --now nginx
+  EOF
+  user_data_replace_on_change = true
   vpc_security_group_ids      = [aws_security_group.ec2.id]
 
   tags = {
