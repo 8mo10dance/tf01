@@ -24,6 +24,10 @@ module "cloudfront" {
   bucket_name = "my-bucket-949926374137-ap-northeast-1-an"
 }
 
+module "ec2" {
+  source = "../modules/ec2"
+}
+
 import {
   to = module.site.aws_s3_bucket.site
   id = "my-bucket-949926374137-ap-northeast-1-an"
@@ -52,6 +56,26 @@ import {
 import {
   to = module.cloudfront.aws_cloudfront_distribution.site
   id = "E27L9ZCVF9GWVN"
+}
+
+import {
+  to = module.ec2.aws_default_vpc.ec2
+  id = "vpc-0042c5c5b7d045878"
+}
+
+import {
+  to = module.ec2.aws_default_subnet.ec2
+  id = "subnet-07368c60eaae5e97e"
+}
+
+import {
+  to = module.ec2.aws_security_group.ec2
+  id = "sg-09eabd6cce4fa75f2"
+}
+
+import {
+  to = module.ec2.aws_instance.front
+  id = "i-0a2b09a199de5febc"
 }
 
 output "cloudfront_domain_name" {

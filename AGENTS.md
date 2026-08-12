@@ -4,6 +4,7 @@
 
 - When changing `production`, check whether the affected AWS resources already exist and whether they are recorded in Terraform state.
 - When moving or adding existing resources under a module, determine whether `import` or `moved` blocks are required instead of creating the resources again.
+- Do not align `=` signs or otherwise reformat unrelated Terraform attributes when editing a block. Keep formatting changes limited to lines required by the task to avoid noisy diffs.
 - After changing Terraform configuration, run:
   - `terraform fmt -check -recursive`
   - `terraform -chdir=production validate`
