@@ -22,13 +22,14 @@ services:
       - ./client/public:/seed:ro
 
   nginx:
-    image: nginx:1.31.3-alpine
-    depends_on:
-      - floci
+    image: tf01-nginx:local
+    build:
+      context: .
+      args:
+        BUILD_ENV: local
+    platform: linux/amd64
     ports:
       - "8080:80"
-    volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
 
 volumes:
   client-node-modules:
