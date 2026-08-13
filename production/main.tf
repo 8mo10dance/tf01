@@ -28,6 +28,22 @@ module "ec2" {
   source = "../modules/ec2"
 }
 
+module "ecr" {
+  source = "../modules/ecr"
+
+  repository_name = "tf01-nginx"
+}
+
+import {
+  to = module.ecr.aws_ecr_repository.nginx
+  id = "tf01-nginx"
+}
+
+import {
+  to = module.ecr.aws_ecr_lifecycle_policy.nginx
+  id = "tf01-nginx"
+}
+
 import {
   to = module.site.aws_s3_bucket.site
   id = "my-bucket-949926374137-ap-northeast-1-an"
@@ -80,4 +96,8 @@ import {
 
 output "cloudfront_domain_name" {
   value = module.cloudfront.domain_name
+}
+
+output "ecr_repository_url" {
+  value = module.ecr.repository_url
 }
