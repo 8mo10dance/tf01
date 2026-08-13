@@ -70,8 +70,13 @@ resource "aws_instance" "front" {
   subnet_id                   = aws_default_subnet.ec2.id
   user_data                   = <<-EOF
     #!/bin/bash
-    dnf install -y nginx
-    systemctl enable --now nginx
+    dnf install -y docker
+    systemctl enable --now docker
+    docker run --detach \
+      --name nginx \
+      --publish 80:80 \
+      --restart unless-stopped \
+      nginx:1.31.3-alpine
   EOF
   user_data_replace_on_change = true
   vpc_security_group_ids      = [aws_security_group.ec2.id]
