@@ -6,30 +6,15 @@ services:
       - ./client:/client
       - client-node-modules:/client/node_modules
 
-  floci:
-    image: floci/floci:latest-compat
-    ports:
-      - "4566:4566"
-    environment:
-      FLOCI_DEFAULT_REGION: ap-northeast-1
-      FLOCI_STORAGE_MODE: hybrid
-      FLOCI_STORAGE_PERSISTENT_PATH: /app/data
-      FLOCI_SERVICES_S3_ENFORCE_AUTH: "true"
-      FLOCI_INIT_HOOKS_TIMEOUT_SECONDS: "300"
-    volumes:
-      - floci-data:/app/data
-      - ./floci/init/ready.d:/etc/floci/init/ready.d:ro
-      - ./client/public:/seed:ro
-
   nginx:
-    image: nginx:1.31.3-alpine
-    depends_on:
-      - floci
+    image: tf01-nginx:local
+    build:
+      context: .
+      args:
+        BUILD_ENV: local
+    platform: linux/amd64
     ports:
       - "8080:80"
-    volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
 
 volumes:
   client-node-modules:
-  floci-data:

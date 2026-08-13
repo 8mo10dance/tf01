@@ -1,0 +1,7 @@
+.git
+.terraform
+**/.terraform
+*.tfstate
+*.tfstate.*
+client/node_modules
+client/public

@@ -1,59 +1,73 @@
 # S3 static website
 
 This repository builds a React single-page application and serves its generated
-assets from S3. Production uses a private S3 origin behind CloudFront. The local
-environment uses Floci for S3; nginx is only a browser-friendly proxy to that
-bucket and does not serve the generated files directly.
+assets from S3. Production uses a private S3 origin behind CloudFront. A custom
+nginx image provides a separate delivery path and includes the production client
+build in the image.
 
 ## Local development
 
-Install the client dependencies and create a production build with Docker
-Compose:
+Build and start the custom nginx image with Docker Compose:
 
 ```sh
-docker compose run --rm client npm ci
-docker compose run --rm client npm run build:local
+docker compose up --build nginx
 ```
 
-The generated files are written to the ignored `client/public` directory. Start
-Floci and nginx, then create the local S3 website with Terraform:
+Docker Compose passes `BUILD_ENV=local` to the multi-stage Docker build, which
+runs `npm ci` and `npm run build:local`, then copies the generated client files
+into nginx. Open `http://localhost:8080` and check `/`, `/users`, and
+`/users/new`. Direct requests to the React routes fall back to `index.html`.
+
+The Dockerfile defaults to `BUILD_ENV=production`. Override it explicitly when
+another build is needed:
 
 ```sh
-docker compose up -d floci nginx
-terraform -chdir=local init
-terraform -chdir=local apply
+docker build --build-arg BUILD_ENV=local -t tf01-nginx:local .
 ```
 
-Open the `local_site_url` shown by Terraform (`http://localhost:8080`). The `/`,
-`/users`, and `/users/new` routes are handled by the React application during
-client-side navigation. Direct requests to routes without matching S3 objects
-return an S3 error until an SPA fallback strategy is configured.
-
-The Floci ready hook waits for Terraform to create the bucket and then syncs all
-files from `client/public`. If the hook times out, or after rebuilding the
-client, restart Floci to sync the latest build:
+Build the production Linux/AMD64 image with Make:
 
 ```sh
-docker compose restart floci
+make build
 ```
 
-To inspect the local bucket through the AWS CLI:
+The default image is `tf01-nginx:production`. Override its name or tag when
+needed:
 
 ```sh
-AWS_ACCESS_KEY_ID=test \
-AWS_SECRET_ACCESS_KEY=test \
-AWS_DEFAULT_REGION=ap-northeast-1 \
-aws --endpoint-url=http://localhost:4566 s3 ls \
-  s3://my-bucket-949926374137-ap-northeast-1-an
+make build IMAGE_NAME=tf01-nginx IMAGE_TAG="$(git rev-parse HEAD)"
 ```
 
-Stop the emulator without deleting its persisted data:
+Stop the local nginx container:
 
 ```sh
 docker compose down
 ```
 
 ## Production deployment
+
+### Custom nginx image
+
+Create the ECR repository after reviewing the Terraform plan:
+
+```sh
+terraform -chdir=production plan -input=false
+terraform -chdir=production apply
+```
+
+After testing the application through Docker Compose, commit all changes and
+build and push the production image to ECR:
+
+```sh
+make push
+```
+
+This builds `tf01-nginx:production`, authenticates Docker with the current AWS
+CLI credentials, and pushes the image with the full Git commit SHA as its tag.
+It prints the digest URI after the push. The script refuses to push from a dirty
+worktree because ECR tags are immutable.
+
+### S3 and CloudFront
 
 Build the client, preview the S3 changes, and then synchronize the generated
 assets to the production site bucket:
@@ -86,14 +100,10 @@ aws cloudfront wait invalidation-completed \
 
 ## Terraform
 
-The S3 resources are defined in `modules/s3-static-site`. Production and local
-environments both call that module, so S3 infrastructure changes can be tested
-against Floci before they are planned against AWS. CloudFront resources are
-defined separately in `modules/cloudfront` and are used only by production.
+The S3 resources are defined in `modules/s3-static-site`. CloudFront resources
+are defined separately in `modules/cloudfront`. Both are used by production.
 
 ```sh
-terraform -chdir=local plan
-terraform -chdir=local apply
 terraform -chdir=production plan -input=false
 ```
 
