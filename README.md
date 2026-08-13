@@ -97,7 +97,34 @@ terraform -chdir=local apply
 terraform -chdir=production plan -input=false
 ```
 
-The production Terraform configuration and state live under `production/`; the
-local environment has independent state under `local/`. Terraform manages the
-bucket and delivery configuration, but it does not upload the generated client
-assets to production S3.
+The production Terraform configuration lives under `production/`. Its shared
+state is stored in a dedicated, versioned S3 bucket and uses an S3 lock file.
+Terraform manages the bucket and delivery configuration, but it does not upload
+the generated client assets to production S3.
+
+Create the state bucket once from the bootstrap configuration before
+initializing production:
+
+```sh
+terraform -chdir=bootstrap init
+terraform -chdir=bootstrap plan
+terraform -chdir=bootstrap apply
+```
+
+When migrating an existing production local state, first keep a local backup
+outside Git, then run:
+
+```sh
+terraform -chdir=production init -migrate-state
+```
+
+For another worktree, connect it to the already-migrated remote state without
+copying or migrating that worktree's local state:
+
+```sh
+terraform -chdir=production init -reconfigure
+```
+
+Terraform state and state backups must remain outside Git. The bootstrap
+configuration intentionally keeps its own small state locally so that the state
+bucket does not manage itself.
