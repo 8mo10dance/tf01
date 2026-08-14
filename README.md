@@ -67,6 +67,11 @@ CLI credentials, and pushes the image with the full Git commit SHA as its tag.
 It prints the digest URI after the push. The script refuses to push from a dirty
 worktree because ECR tags are immutable.
 
+To deploy an image to EC2, copy the printed digest URI to the `nginx_image_uri`
+argument of the production EC2 module. Review the full Terraform plan before
+applying it. Changing the digest updates the instance user data and replaces the
+EC2 instance, so its public IP address and DNS name may change.
+
 ### S3 and CloudFront
 
 Build the client, preview the S3 changes, and then synchronize the generated

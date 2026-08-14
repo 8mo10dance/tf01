@@ -2,6 +2,48 @@ resource "aws_default_vpc" "ec2" {
   tags = {}
 }
 
+resource "aws_iam_role" "ecr_pull" {
+  name = "tf01-front-ecr-pull"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "ec2.amazonaws.com"
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "ecr_pull" {
+  name = "ecr-pull"
+  role = aws_iam_role.ecr_pull.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action   = ["ecr:GetAuthorizationToken"]
+      Effect   = "Allow"
+      Resource = "*"
+      }, {
+      Action = [
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:BatchGetImage",
+        "ecr:GetDownloadUrlForLayer",
+      ]
+      Effect   = "Allow"
+      Resource = var.ecr_repository_arn
+    }]
+  })
+}
+
+resource "aws_iam_instance_profile" "ecr_pull" {
+  name = "tf01-front-ecr-pull"
+  role = aws_iam_role.ecr_pull.name
+}
+
 resource "aws_default_subnet" "ec2" {
   availability_zone       = "ap-northeast-1d"
   map_public_ip_on_launch = true
@@ -63,6 +105,7 @@ resource "aws_instance" "front" {
   associate_public_ip_address = true
   availability_zone           = "ap-northeast-1d"
   ebs_optimized               = true
+  iam_instance_profile        = aws_iam_instance_profile.ecr_pull.name
   instance_type               = "t3.micro"
   key_name                    = "tf01-front"
   private_ip                  = "172.31.25.63"
@@ -70,16 +113,35 @@ resource "aws_instance" "front" {
   subnet_id                   = aws_default_subnet.ec2.id
   user_data                   = <<-EOF
     #!/bin/bash
+    set -euxo pipefail
+
     dnf install -y docker
     systemctl enable --now docker
+
+    for login_attempt in $(seq 1 12); do
+      if aws ecr get-login-password --region ap-northeast-1 \
+        | docker login --username AWS --password-stdin 949926374137.dkr.ecr.ap-northeast-1.amazonaws.com; then
+        break
+      fi
+
+      if [ "$login_attempt" -eq 12 ]; then
+        exit 1
+      fi
+
+      sleep 5
+    done
+
+    docker pull ${var.nginx_image_uri}
     docker run --detach \
       --name nginx \
       --publish 80:80 \
       --restart unless-stopped \
-      nginx:1.31.3-alpine
+      ${var.nginx_image_uri}
   EOF
   user_data_replace_on_change = true
   vpc_security_group_ids      = [aws_security_group.ec2.id]
+
+  depends_on = [aws_iam_role_policy.ecr_pull]
 
   tags = {
     Name = "tf01-front"
