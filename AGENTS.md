@@ -1,5 +1,13 @@
 # Repository Guidelines
 
+## Code Formatting
+
+- Do not add padding spaces to vertically align `=` signs. Keep formatting changes limited to the lines required by the task to avoid noisy diffs.
+
+## Git
+
+- Do not run `git push` or `git fetch`; ask the user to run these commands instead.
+
 ## Terraform
 
 - When changing `production`, check whether the affected AWS resources already exist and whether they are recorded in Terraform state.
