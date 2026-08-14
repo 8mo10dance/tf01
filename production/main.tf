@@ -26,6 +26,8 @@ module "cloudfront" {
 
 module "ec2" {
   source = "../modules/ec2"
+
+  nginx_image_uri = "949926374137.dkr.ecr.ap-northeast-1.amazonaws.com/tf01-nginx@sha256:5cea44c96902b665b4b700523e269f17e055164601290ca5d8cd63cd7cb9534d"
 }
 
 module "ecr" {

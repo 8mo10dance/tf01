@@ -1,5 +1,34 @@
+variable "nginx_image_uri" {
+  type = string
+}
+
 resource "aws_default_vpc" "ec2" {
   tags = {}
+}
+
+resource "aws_iam_role" "ec2" {
+  name = "tf01-front"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "ec2.amazonaws.com"
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ecr_read_only" {
+  role       = aws_iam_role.ec2.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+}
+
+resource "aws_iam_instance_profile" "ec2" {
+  name = "tf01-front"
+  role = aws_iam_role.ec2.name
 }
 
 resource "aws_default_subnet" "ec2" {
@@ -64,6 +93,7 @@ resource "aws_instance" "front" {
   availability_zone           = "ap-northeast-1d"
   ebs_optimized               = true
   instance_type               = "t3.micro"
+  iam_instance_profile        = aws_iam_instance_profile.ec2.name
   key_name                    = "tf01-front"
   private_ip                  = "172.31.25.63"
   source_dest_check           = true
@@ -72,14 +102,19 @@ resource "aws_instance" "front" {
     #!/bin/bash
     dnf install -y docker
     systemctl enable --now docker
+    aws ecr get-login-password --region ap-northeast-1 \
+      | docker login --username AWS --password-stdin 949926374137.dkr.ecr.ap-northeast-1.amazonaws.com
+    docker pull ${var.nginx_image_uri}
     docker run --detach \
       --name nginx \
       --publish 80:80 \
       --restart unless-stopped \
-      nginx:1.31.3-alpine
+      ${var.nginx_image_uri}
   EOF
   user_data_replace_on_change = true
   vpc_security_group_ids      = [aws_security_group.ec2.id]
+
+  depends_on = [aws_iam_role_policy_attachment.ecr_read_only]
 
   tags = {
     Name = "tf01-front"
