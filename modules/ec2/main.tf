@@ -113,13 +113,30 @@ resource "aws_instance" "front" {
   subnet_id                   = aws_default_subnet.ec2.id
   user_data                   = <<-EOF
     #!/bin/bash
+    set -euxo pipefail
+
     dnf install -y docker
     systemctl enable --now docker
+
+    for login_attempt in $(seq 1 12); do
+      if aws ecr get-login-password --region ap-northeast-1 \
+        | docker login --username AWS --password-stdin 949926374137.dkr.ecr.ap-northeast-1.amazonaws.com; then
+        break
+      fi
+
+      if [ "$login_attempt" -eq 12 ]; then
+        exit 1
+      fi
+
+      sleep 5
+    done
+
+    docker pull ${var.nginx_image_uri}
     docker run --detach \
       --name nginx \
       --publish 80:80 \
       --restart unless-stopped \
-      nginx:1.31.3-alpine
+      ${var.nginx_image_uri}
   EOF
   user_data_replace_on_change = true
   vpc_security_group_ids      = [aws_security_group.ec2.id]
