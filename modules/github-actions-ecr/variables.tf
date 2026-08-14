@@ -8,18 +8,8 @@ variable "github_owner" {
   type        = string
 }
 
-variable "github_owner_id" {
-  description = "Numeric GitHub repository owner ID"
-  type        = string
-}
-
 variable "github_repository" {
   description = "GitHub repository name"
-  type        = string
-}
-
-variable "github_repository_id" {
-  description = "Numeric GitHub repository ID"
   type        = string
 }
 
