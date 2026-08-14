@@ -26,6 +26,8 @@ module "cloudfront" {
 
 module "ec2" {
   source = "../modules/ec2"
+
+  ecr_repository_arn = module.ecr.repository_arn
 }
 
 module "ecr" {

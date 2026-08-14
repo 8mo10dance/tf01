@@ -29,3 +29,7 @@ resource "aws_ecr_lifecycle_policy" "nginx" {
 output "repository_url" {
   value = aws_ecr_repository.nginx.repository_url
 }
+
+output "repository_arn" {
+  value = aws_ecr_repository.nginx.arn
+}
