@@ -10,6 +10,17 @@ provider "aws" {
   region = "ap-northeast-1"
 }
 
+module "alb" {
+  source = "../modules/alb"
+
+  name               = "tf01-alb"
+  security_group_ids = ["sg-05d17250f04417930"]
+  subnet_ids         = ["subnet-07368c60eaae5e97e", "subnet-09bbd3f41c9d0d432"]
+  target_id          = module.ec2.instance_id
+  target_group_name  = "tf01-tg"
+  vpc_id             = "vpc-0042c5c5b7d045878"
+}
+
 module "site" {
   source = "../modules/s3-static-site"
 
@@ -95,6 +106,19 @@ import {
 import {
   to = module.ec2.aws_instance.front
   id = "i-0a2b09a199de5febc"
+}
+
+import {
+  to = module.alb.aws_lb_target_group_attachment.ec2
+  identity = {
+    account_id        = "949926374137"
+    availability_zone = null
+    port              = 80
+    quic_server_id    = null
+    region            = "ap-northeast-1"
+    target_group_arn  = "arn:aws:elasticloadbalancing:ap-northeast-1:949926374137:targetgroup/tf01-tg/175cdbdfc044666b"
+    target_id         = "i-015bae88afca3cc87"
+  }
 }
 
 output "cloudfront_domain_name" {

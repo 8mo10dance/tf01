@@ -78,13 +78,13 @@ resource "aws_security_group" "ec2" {
     }, {
     cidr_blocks      = []
     description      = ""
-    from_port        = 0
+    from_port        = 80
     ipv6_cidr_blocks = []
     prefix_list_ids  = []
-    protocol         = "-1"
-    security_groups  = []
-    self             = true
-    to_port          = 0
+    protocol         = "tcp"
+    security_groups  = ["sg-05d17250f04417930"]
+    self             = false
+    to_port          = 80
   }]
 
   egress = [{
