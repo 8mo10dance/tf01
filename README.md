@@ -1,9 +1,8 @@
-# S3 static website
+# tf01
 
 This repository builds a React single-page application and serves its generated
-assets from S3. Production uses a private S3 origin behind CloudFront. A custom
-nginx image provides a separate delivery path and includes the production client
-build in the image.
+assets from a custom nginx image running on EC2 behind an Application Load
+Balancer.
 
 ## Local development
 
@@ -72,41 +71,9 @@ argument of the production EC2 module. Review the full Terraform plan before
 applying it. Changing the digest updates the instance user data and replaces the
 EC2 instance, so its public IP address and DNS name may change.
 
-### S3 and CloudFront
-
-Build the client, preview the S3 changes, and then synchronize the generated
-assets to the production site bucket:
-
-```sh
-docker compose run --rm client npm ci
-docker compose run --rm client npm run build:production
-aws s3 sync client/public \
-  s3://my-bucket-949926374137-ap-northeast-1-an \
-  --delete --dryrun
-aws s3 sync client/public \
-  s3://my-bucket-949926374137-ap-northeast-1-an \
-  --delete
-```
-
-The bucket is dedicated to generated site assets. The `--delete` option removes
-objects that are no longer present in the current build. After the upload,
-invalidate the CloudFront cache and wait for it to complete:
-
-```sh
-invalidation_id="$(aws cloudfront create-invalidation \
-  --distribution-id E27L9ZCVF9GWVN \
-  --paths '/*' \
-  --query 'Invalidation.Id' \
-  --output text)"
-aws cloudfront wait invalidation-completed \
-  --distribution-id E27L9ZCVF9GWVN \
-  --id "$invalidation_id"
-```
-
 ## Terraform
 
-The S3 resources are defined in `modules/s3-static-site`. CloudFront resources
-are defined separately in `modules/cloudfront`. Both are used by production.
+The ALB, EC2, and ECR resources are defined in modules and used by production.
 
 ```sh
 terraform -chdir=production plan -input=false
@@ -114,8 +81,7 @@ terraform -chdir=production plan -input=false
 
 The production Terraform configuration lives under `production/`. Its shared
 state is stored in a dedicated, versioned S3 bucket and uses an S3 lock file.
-Terraform manages the bucket and delivery configuration, but it does not upload
-the generated client assets to production S3.
+Terraform manages the application delivery infrastructure.
 
 Create the state bucket once from the bootstrap configuration before
 initializing production:

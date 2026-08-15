@@ -21,20 +21,6 @@ module "alb" {
   vpc_id             = "vpc-0042c5c5b7d045878"
 }
 
-module "site" {
-  source = "../modules/s3-static-site"
-
-  bucket_name                 = "my-bucket-949926374137-ap-northeast-1-an"
-  cloudfront_distribution_arn = module.cloudfront.distribution_arn
-}
-
-module "cloudfront" {
-  source = "../modules/cloudfront"
-
-  aws_region  = "ap-northeast-1"
-  bucket_name = "my-bucket-949926374137-ap-northeast-1-an"
-}
-
 module "ec2" {
   source = "../modules/ec2"
 
@@ -56,36 +42,6 @@ import {
 import {
   to = module.ecr.aws_ecr_lifecycle_policy.nginx
   id = "tf01-nginx"
-}
-
-import {
-  to = module.site.aws_s3_bucket.site
-  id = "my-bucket-949926374137-ap-northeast-1-an"
-}
-
-import {
-  to = module.site.aws_s3_bucket_website_configuration.site
-  id = "my-bucket-949926374137-ap-northeast-1-an"
-}
-
-import {
-  to = module.site.aws_s3_bucket_public_access_block.site
-  id = "my-bucket-949926374137-ap-northeast-1-an"
-}
-
-import {
-  to = module.site.aws_s3_bucket_policy.site
-  id = "my-bucket-949926374137-ap-northeast-1-an"
-}
-
-import {
-  to = module.cloudfront.aws_cloudfront_origin_access_control.site
-  id = "E1067EAO0E6YUA"
-}
-
-import {
-  to = module.cloudfront.aws_cloudfront_distribution.site
-  id = "E27L9ZCVF9GWVN"
 }
 
 import {
@@ -119,10 +75,6 @@ import {
     target_group_arn  = "arn:aws:elasticloadbalancing:ap-northeast-1:949926374137:targetgroup/tf01-tg/175cdbdfc044666b"
     target_id         = "i-015bae88afca3cc87"
   }
-}
-
-output "cloudfront_domain_name" {
-  value = module.cloudfront.domain_name
 }
 
 output "ecr_repository_url" {
