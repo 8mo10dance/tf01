@@ -47,6 +47,23 @@ docker compose down
 
 ### Custom nginx image
 
+Bootstrap the GitHub Actions OIDC provider and ECR push role before enabling
+the workflow on `main`. Review the targeted plan, then apply only the bootstrap
+resources:
+
+```sh
+terraform -chdir=production plan \
+  -target=module.github_actions_ecr \
+  -out=github-actions-ecr.tfplan
+terraform -chdir=production apply github-actions-ecr.tfplan
+```
+
+After the workflow is merged into `main`, changes under `client/`, `nginx/`,
+the Dockerfile, or `.dockerignore` build a Linux/AMD64 image and push it to ECR
+with the commit SHA as its immutable tag. The workflow summary prints the ECR
+digest and the digest-pinned image URI to copy into Terraform. Updating EC2 to
+run that digest is a separate deployment step.
+
 Create the ECR repository after reviewing the Terraform plan:
 
 ```sh

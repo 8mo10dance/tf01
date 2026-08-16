@@ -34,6 +34,15 @@ module "ecr" {
   repository_name = "tf01-nginx"
 }
 
+module "github_actions_ecr" {
+  source = "../modules/github-actions-ecr"
+
+  ecr_repository_arn = module.ecr.repository_arn
+  github_owner       = "8mo10dance"
+  github_repository  = "tf01"
+  role_name          = "tf01-github-actions-ecr-push"
+}
+
 import {
   to = module.ecr.aws_ecr_repository.nginx
   id = "tf01-nginx"
@@ -79,4 +88,8 @@ import {
 
 output "ecr_repository_url" {
   value = module.ecr.repository_url
+}
+
+output "github_actions_ecr_role_arn" {
+  value = module.github_actions_ecr.role_arn
 }
