@@ -1,6 +1,15 @@
 name: Push nginx image to ECR
 
 on:
+  pull_request:
+    branches:
+      - issue/13-nginx-ci
+    paths:
+      - client/**
+      - Dockerfile
+      - .dockerignore
+      - nginx/**
+      - .github/workflows/push-nginx-image.yml
   push:
     branches:
       - main
@@ -18,11 +27,33 @@ concurrency:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
-  push:
+  build:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64
+          build-args: BUILD_ENV=production
+          push: false
+          provenance: false
+
+  push:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     env:
       AWS_REGION: ap-northeast-1
       ECR_REPOSITORY: tf01-nginx
